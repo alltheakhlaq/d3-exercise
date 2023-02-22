@@ -36,6 +36,35 @@ const yScale = d3
 let leftAxis = d3.axisLeft(yScale);
 let bottomAxis = d3.axisBottom(xScale);
 
+// create a tooltip
+var Tooltip = d3
+  .selectAll("bar")
+  .data(dataset.data)
+  .append("div")
+  .style("opacity", 0)
+  .attr("class", "tooltip")
+  .style("background-color", "white")
+  .style("position", "absolute")
+  .style("border", "solid")
+  .style("border-width", "2px")
+  .style("border-radius", "5px")
+  .style("padding", "5px");
+
+// Three function that change the tooltip when user hover / move / leave a cell
+var mouseover = function (d) {
+  Tooltip.style("opacity", 1);
+  d3.select(".tooltip").style("stroke", "black").style("opacity", 1);
+};
+var mousemove = function (d) {
+  d3.select("#tooltip")
+    .style("left", d3.event.pageX + 10 + "px")
+    .style("top", d3.event.pageY + 10 + "px");
+};
+var mouseleave = function (d) {
+  Tooltip.style("opacity", 0);
+  d3.select(".tooltip").style("stroke", "none").style("opacity", 0.8);
+};
+
 const svg = d3
   .select("body")
   .append("svg")
@@ -44,7 +73,7 @@ const svg = d3
   .style("border-style", "solid");
 
 svg
-  .selectAll("rect")
+  .selectAll("#title")
   .data(dataset.data)
   .enter()
   .append("rect")
@@ -55,27 +84,9 @@ svg
   .attr("class", "bar")
   .attr("fill", "grey")
   .append("title")
-  // tooltip
-  .on("mouseover", function (e, d) {
-    console.log(d[1]);
-    tooltip
-      .style("opacity", 1)
-
-      .attr("data-date", () => {
-        return d[0];
-      })
-      .text(d[0] + "  $ " + d[1] + " Billion")
-      .style("top", event.pageY + "px")
-      .style("left", event.pageX + "px")
-      .style("padding", "10px")
-      .style("border", "2px solid black")
-      .style("border-radius", "20px")
-      .attr("id", "tooltip")
-      .style("font-size", "18px");
-  })
-  .on("mouseout", (e, i) => {
-    tooltip.style("opacity", 0);
-  });
+  .on("mouseover", mouseover)
+  .on("mousemove", mousemove)
+  .on("mouseleave", mouseleave);
 
 svg
   .append("g")
