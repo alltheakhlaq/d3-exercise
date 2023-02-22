@@ -4,35 +4,45 @@ import dataset from "./data.js";
 console.log(dataset);
 // dataset.data = array of data with shape: [date, value]
 
+const parseDate = d3.utcParse("%Y-%m-%d");
 const dateToMillis = (date) => {
-  return Date.parse(date);
+  return parseDate(date);
 };
 
-const w = 500;
+const w = 1000;
 const h = 500;
 
-const padding = 30;
+const padding = 40;
 
-const barWidth = w / dataset.data.length;
+const barWidth = (w - padding - padding) / dataset.data.length;
 
 const xScale = d3
-  .scaleLinear()
-  .domain([0, d3.max(dataset.data, (d) => dateToMillis(d[0]))])
+  .scaleTime()
+  .domain([
+    d3.min(dataset.data, (d) => dateToMillis(d[0])),
+    d3.max(dataset.data, (d) => dateToMillis(d[0])),
+  ])
   .range([padding, w - padding]);
 
 const yScale = d3
   .scaleLinear()
-  .domain([0, d3.max(dataset.data, (d) => d[1])])
+  .domain([
+    d3.min(dataset.data, ([_, value]) => value),
+    d3.max(dataset.data, ([_, value]) => value),
+  ])
   .range([h - padding, padding]);
+
+// axis
+let leftAxis = d3.axisLeft(yScale);
+let bottomAxis = d3.axisBottom(xScale);
 
 const svg = d3
   .select("body")
   .append("svg")
   .attr("width", w)
   .attr("height", h)
-  .append("g")
   .style("border-style", "solid");
-// .attr("transform", "translate(" + padding + "," + padding + ")");
+
 svg
   .selectAll("rect")
   .data(dataset.data)
@@ -41,15 +51,32 @@ svg
   .attr("x", (d) => xScale(dateToMillis(d[0])))
   .attr("y", (d) => yScale(d[1]))
   .attr("width", barWidth)
-  .attr("height", (d, i) => {
-    return d[1];
-  })
+  .attr("height", (d) => h - padding - yScale(d[1]))
   .attr("class", "bar")
-  .attr("fill", "grey");
+  .attr("fill", "grey")
+  .append("title")
+  // tooltip
+  .on("mouseover", function (e, d) {
+    console.log(d[1]);
+    tooltip
+      .style("opacity", 1)
 
-// axis
-let leftAxis = d3.axisLeft(yScale);
-let bottomAxis = d3.axisBottom(xScale);
+      .attr("data-date", () => {
+        return d[0];
+      })
+      .text(d[0] + "  $ " + d[1] + " Billion")
+      .style("top", event.pageY + "px")
+      .style("left", event.pageX + "px")
+      .style("padding", "10px")
+      .style("border", "2px solid black")
+      .style("border-radius", "20px")
+      .attr("id", "tooltip")
+      .style("font-size", "18px");
+  })
+  .on("mouseout", (e, i) => {
+    tooltip.style("opacity", 0);
+  });
+
 svg
   .append("g")
   .attr("id", "x-axis")
@@ -61,6 +88,3 @@ svg
   .attr("id", "y-axis")
   .attr("transform", "translate(" + padding + ", 0)")
   .call(leftAxis);
-
-svg.select("x-axis").attr("class", "tick");
-svg.select("y-axis").attr("class", "tick");

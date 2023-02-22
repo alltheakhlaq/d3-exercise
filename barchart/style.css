@@ -1,2 +1,7 @@
 .bar {
     background-color: blue;}
+
+    .bar:hover {
+        fill: black;
+      }
+
